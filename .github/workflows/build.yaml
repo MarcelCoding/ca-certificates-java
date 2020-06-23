@@ -55,5 +55,5 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: nova-discod-bot
+          name: ca-certificates-java
           path: build/libs
