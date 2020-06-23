@@ -81,6 +81,8 @@ public class UpdateCertificates {
     }
 
     protected void parseLine(final String line) throws GeneralSecurityException, UnknownInputException {
+        if (line.isBlank()) return;
+
         final String path = line.substring(1);
         final String filename = path.substring(path.lastIndexOf("/") + 1);
         final String alias = "debian:" + filename;
