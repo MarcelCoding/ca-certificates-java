@@ -36,6 +36,7 @@ public class UpdateCertificatesTest {
     private static final String CERT_ALIAS = "debian:spi-cacert-2008.crt";
     private static final String CERT_PATH = "./build/resources/test/spi-cacert-2008.crt";
     private static final String INVALID_CERT_CMD = "x" + CERT_PATH;
+    private static final String EMPTY_CERT_CMD = "       ";
     private static final String REMOVE_CERT_CMD = "-" + CERT_PATH;
     private static final String ADD_CERT_CMD = "+" + CERT_PATH;
 
@@ -62,6 +63,15 @@ public class UpdateCertificatesTest {
     }
 
     /**
+     * Try to send an empty command ("   ") in parseLine : throw UnknownInput
+     */
+    @Test
+    public void testEmptyCommand() throws Exception {
+        new UpdateCertificates(this.filename, this.password).parseLine(EMPTY_CERT_CMD);
+        assertTrue(true);
+    }
+
+    /**
      * Test to insert a valid certificate and then check if it's really in KS.
      */
     @Test
@@ -70,7 +80,7 @@ public class UpdateCertificatesTest {
         uc.parseLine(ADD_CERT_CMD);
         uc.finish();
 
-        final KeyStoreHandler keystore = new KeyStoreHandler(this.filename, this.password.toCharArray());
+        final KeyStoreHandler keystore = new KeyStoreHandler(this.filename, this.password.toCharArray(), clear);
         assertTrue(keystore.contains(CERT_ALIAS));
     }
 
@@ -84,7 +94,7 @@ public class UpdateCertificatesTest {
         uc.parseLine("+/usr/share/ca-certificates/null.crt");
         uc.finish();
 
-        assertFalse(new KeyStoreHandler(this.filename, this.password.toCharArray())
+        assertFalse(new KeyStoreHandler(this.filename, this.password.toCharArray(), clear)
                 .contains("debian:null.crt"));
     }
 
@@ -97,7 +107,7 @@ public class UpdateCertificatesTest {
         uc.parseLine("+./build/resources/test/spi-cacert-2008-with-comment.crt");
         uc.finish();
 
-        assertTrue(new KeyStoreHandler(this.filename, this.password.toCharArray())
+        assertTrue(new KeyStoreHandler(this.filename, this.password.toCharArray(), clear)
                 .contains("debian:spi-cacert-2008-with-comment.crt"));
     }
 
@@ -112,7 +122,7 @@ public class UpdateCertificatesTest {
         uc.parseLine(ADD_CERT_CMD);
         uc.finish();
 
-        assertTrue(new KeyStoreHandler(this.filename, this.password.toCharArray())
+        assertTrue(new KeyStoreHandler(this.filename, this.password.toCharArray(), clear)
                 .contains(CERT_ALIAS));
     }
 
@@ -126,7 +136,7 @@ public class UpdateCertificatesTest {
         uc.finish();
 
         // We start with empty KS, so it shouldn't do anything
-        assertFalse(new KeyStoreHandler(this.filename, this.password.toCharArray())
+        assertFalse(new KeyStoreHandler(this.filename, this.password.toCharArray(), clear)
                 .contains(CERT_ALIAS));
     }
 
@@ -139,7 +149,7 @@ public class UpdateCertificatesTest {
         ucAdd.parseLine(ADD_CERT_CMD);
         ucAdd.finish();
 
-        final KeyStoreHandler keystore = new KeyStoreHandler(this.filename, this.password.toCharArray());
+        final KeyStoreHandler keystore = new KeyStoreHandler(this.filename, this.password.toCharArray(), clear);
         assertTrue(keystore.contains(CERT_ALIAS));
 
         final UpdateCertificates ucRemove = new UpdateCertificates(this.filename, this.password);
@@ -156,7 +166,7 @@ public class UpdateCertificatesTest {
         uc.processChanges(new StringReader(ADD_CERT_CMD + "\n" + INVALID_CERT_CMD + "\n" + REMOVE_CERT_CMD + "\n"));
         uc.finish();
 
-        assertFalse(new KeyStoreHandler(this.filename, this.password.toCharArray())
+        assertFalse(new KeyStoreHandler(this.filename, this.password.toCharArray(), clear)
                 .contains(CERT_ALIAS));
     }
 }

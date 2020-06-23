@@ -45,12 +45,14 @@ class KeyStoreHandler {
      * The password of the keystore
      */
     private final char[] password;
+    private final boolean clear;
     private final CertificateFactory certFactory;
     private KeyStore keyStore;
 
-    KeyStoreHandler(final String filename, final char[] password) throws GeneralSecurityException, InvalidKeystorePasswordException, IOException {
+    KeyStoreHandler(final String filename, final char[] password, final boolean clear) throws GeneralSecurityException, InvalidKeystorePasswordException, IOException {
         this.filename = filename;
         this.password = password;
+        this.clear = clear;
         this.certFactory = CertificateFactory.getInstance("X.509");
 
         this.load();
@@ -63,7 +65,7 @@ class KeyStoreHandler {
         final KeyStore keyStore = KeyStore.getInstance("JKS");
 
         final File file = new File(this.filename);
-        if (!file.exists() || !file.canRead()) {
+        if (this.clear || !file.exists() || !file.canRead()) {
             keyStore.load(null, this.password);
         } else {
             try (InputStream inputStream = new FileInputStream(this.filename)) {
@@ -80,6 +82,7 @@ class KeyStoreHandler {
      * Write actual keystore content to disk.
      */
     public void save() throws GeneralSecurityException, UnableToSaveKeystoreException {
+        if (this.clear) new File(this.filename).delete();
         try (OutputStream outputStream = new FileOutputStream(this.filename)) {
             this.keyStore.store(outputStream, this.password);
         } catch (IOException e) {

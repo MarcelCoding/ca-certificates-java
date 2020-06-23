@@ -38,22 +38,22 @@ public class UpdateCertificates {
 
     private final KeyStoreHandler keystore;
 
-    public UpdateCertificates(final String keystoreFile, final String password) throws IOException, GeneralSecurityException, InvalidKeystorePasswordException {
-        this.keystore = new KeyStoreHandler(keystoreFile, password.toCharArray());
+    public UpdateCertificates(final String keystoreFile, final String password, final boolean clear) throws IOException, GeneralSecurityException, InvalidKeystorePasswordException {
+        this.keystore = new KeyStoreHandler(keystoreFile, password.toCharArray(), clear);
     }
 
     public static void main(final String[] args) throws IOException, GeneralSecurityException {
         String passwordString = "changeit";
+        boolean clear = false;
 
-        if (args.length == 2 && args[0].equals("--storepass")) {
-            passwordString = args[1];
-        } else if (args.length > 0) {
-            System.err.println("Usage: java [--storepass <password>]");
+        if (args.length == 1 && args[0].equals("--clear")) clear = true;
+        else if (args.length > 0) {
+            System.err.println("Usage: java [--clear]");
             System.exit(1);
         }
 
         try {
-            final UpdateCertificates uc = new UpdateCertificates(System.getenv("JAVA_HOME") + "/lib/security/cacerts", passwordString);
+            final UpdateCertificates uc = new UpdateCertificates(System.getenv("JAVA_HOME") + "/lib/security/cacerts", passwordString, clear);
             // Force reading of InputStream in UTF-8
             uc.processChanges(new InputStreamReader(System.in, StandardCharsets.UTF_8));
             uc.finish();
