@@ -48,7 +48,7 @@ public class UpdateCertificates {
         if (args.length == 2 && args[0].equals("--storepass")) {
             passwordString = args[1];
         } else if (args.length > 0) {
-            System.err.println("Usage: java org.debian.security.UpdateCertificates [--storepass <password>]");
+            System.err.println("Usage: java [--storepass <password>]");
             System.exit(1);
         }
 
