@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class KeyStoreHandlerTest {
 
-    private final String filename = "./target/test-classes/tests-cacerts";
+    private final String filename = "./build/resources/test/store";
     private final char[] password = "changeit".toCharArray();
 
     /**

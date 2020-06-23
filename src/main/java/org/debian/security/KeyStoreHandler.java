@@ -19,6 +19,7 @@
 
 package org.debian.security;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -47,7 +48,7 @@ class KeyStoreHandler {
     private final CertificateFactory certFactory;
     private KeyStore keyStore;
 
-    KeyStoreHandler(final String filename, final char[] password) throws GeneralSecurityException, InvalidKeystorePasswordException {
+    KeyStoreHandler(final String filename, final char[] password) throws GeneralSecurityException, InvalidKeystorePasswordException, IOException {
         this.filename = filename;
         this.password = password;
         this.certFactory = CertificateFactory.getInstance("X.509");
@@ -58,13 +59,18 @@ class KeyStoreHandler {
     /**
      * Try to open an existing keystore or create an new one.
      */
-    public void load() throws GeneralSecurityException, InvalidKeystorePasswordException {
+    public void load() throws GeneralSecurityException, InvalidKeystorePasswordException, IOException {
         final KeyStore keyStore = KeyStore.getInstance("JKS");
 
-        try (InputStream inputStream = new FileInputStream(this.filename)) {
-            keyStore.load(inputStream, this.password);
-        } catch (IOException e) {
-            throw new InvalidKeystorePasswordException("Cannot open Java keystore. Is the password correct?", e);
+        final File file = new File(this.filename);
+        if (!file.exists() || !file.canRead()) {
+            keyStore.load(null, this.password);
+        } else {
+            try (InputStream inputStream = new FileInputStream(this.filename)) {
+                keyStore.load(inputStream, this.password);
+            } catch (IOException e) {
+                throw new InvalidKeystorePasswordException("Cannot open Java keystore. Is the password correct?", e);
+            }
         }
 
         this.keyStore = keyStore;

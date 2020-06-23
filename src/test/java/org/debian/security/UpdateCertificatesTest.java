@@ -34,12 +34,12 @@ import static org.junit.jupiter.api.Assertions.*;
 public class UpdateCertificatesTest {
 
     private static final String CERT_ALIAS = "debian:spi-cacert-2008.crt";
-    private static final String CERT_PATH = "target/test-classes/spi-cacert-2008.crt";
+    private static final String CERT_PATH = "./build/resources/test/spi-cacert-2008.crt";
     private static final String INVALID_CERT_CMD = "x" + CERT_PATH;
     private static final String REMOVE_CERT_CMD = "-" + CERT_PATH;
     private static final String ADD_CERT_CMD = "+" + CERT_PATH;
 
-    private final String filename = "./target/test-classes";
+    private final String filename = "./build/resources/test/store";
     private final String password = "changeit";
 
     @BeforeEach
@@ -94,7 +94,7 @@ public class UpdateCertificatesTest {
     @Test
     public void testAddCertWithComment() throws Exception {
         final UpdateCertificates uc = new UpdateCertificates(this.filename, this.password);
-        uc.parseLine("+target/test-classes/spi-cacert-2008-with-comment.crt");
+        uc.parseLine("+./build/resources/test/spi-cacert-2008-with-comment.crt");
         uc.finish();
 
         assertTrue(new KeyStoreHandler(this.filename, this.password.toCharArray())
