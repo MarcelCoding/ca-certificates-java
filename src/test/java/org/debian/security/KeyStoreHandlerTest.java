@@ -18,11 +18,12 @@
 
 package org.debian.security;
 
-import java.io.File;
-
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import java.io.File;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * @author Emmanuel Bourg
@@ -30,16 +31,15 @@ import static org.junit.Assert.*;
  */
 public class KeyStoreHandlerTest {
 
-    private String ksFilename = "./target/test-classes/tests-cacerts";
-    private char[] ksPassword = "changeit".toCharArray();
+    private final String filename = "./target/test-classes/tests-cacerts";
+    private final char[] password = "changeit".toCharArray();
 
     /**
      * Test a simple open then write without any modification.
      */
     @Test
     public void testNoop() throws Exception {
-        KeyStoreHandler keystore = new KeyStoreHandler(ksFilename, ksPassword);
-        keystore.save();
+        new KeyStoreHandler(this.filename, this.password).save();
     }
 
     /**
@@ -50,14 +50,13 @@ public class KeyStoreHandlerTest {
     @Test
     public void testWriteThenOpenWrongPwd() throws Exception {
         try {
-            KeyStoreHandler keystore = new KeyStoreHandler(ksFilename, ksPassword);
-            keystore.save();
+            new KeyStoreHandler(this.filename, this.password).save();
         } catch (InvalidKeystorePasswordException e) {
             fail();
         }
 
         try {
-            KeyStoreHandler keystore = new KeyStoreHandler(ksFilename, "wrongpassword".toCharArray());
+            final KeyStoreHandler keystore = new KeyStoreHandler(this.filename, "wrongpassword".toCharArray());
             fail();
             keystore.save();
         } catch (InvalidKeystorePasswordException e) {
@@ -73,10 +72,10 @@ public class KeyStoreHandlerTest {
     @Test
     public void testDeleteThenWrite() throws Exception {
         try {
-            KeyStoreHandler keystore = new KeyStoreHandler(ksFilename, ksPassword);
+            final KeyStoreHandler keystore = new KeyStoreHandler(this.filename, this.password);
 
             // Replace actual file by a directory !
-            File file = new File(ksFilename);
+            final File file = new File(this.filename);
             file.delete();
             file.mkdir();
 

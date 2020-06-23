@@ -22,6 +22,7 @@ package org.debian.security;
  * Unable to save keystore to provided location.
  */
 public class UnableToSaveKeystoreException extends Exception {
+
     private static final long serialVersionUID = 3632154306237688490L;
 
     public UnableToSaveKeystoreException(String message, Exception e) {

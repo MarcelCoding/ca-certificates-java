@@ -18,13 +18,16 @@
 
 package org.debian.security;
 
-import java.io.File;
-import java.io.StringReader;
-
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import java.io.File;
+import java.io.StringReader;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Tests for {@link UpdateCertificates}.
@@ -36,17 +39,16 @@ public class UpdateCertificatesTest {
     private static final String CERT_ALIAS = "debian:spi-cacert-2008.crt";
     private static final String CERT_PATH = "target/test-classes/spi-cacert-2008.crt";
     private static final String INVALID_CERT_CMD = "x" + CERT_PATH;
-    private static final String REMOVE_CERT_CMD  = "-" + CERT_PATH;
-    private static final String ADD_CERT_CMD     = "+" + CERT_PATH;
+    private static final String REMOVE_CERT_CMD = "-" + CERT_PATH;
+    private static final String ADD_CERT_CMD = "+" + CERT_PATH;
 
-    private String ksFilename = "./target/test-classes/tests-cacerts";
-    private String ksPassword = "changeit";
+    private final String filename = "./target/test-classes";
+    private final String password = "changeit";
 
     @Before
     public void start() {
         // Delete any previous file
-        File keystore = new File(ksFilename);
-        keystore.delete();
+        new File(this.filename).delete();
     }
 
     /**
@@ -54,9 +56,8 @@ public class UpdateCertificatesTest {
      */
     @Test
     public void testWrongCommand() throws Exception {
-        UpdateCertificates uc = new UpdateCertificates(ksFilename, ksPassword);
         try {
-            uc.parseLine(INVALID_CERT_CMD);
+            new UpdateCertificates(this.filename, this.password).parseLine(INVALID_CERT_CMD);
             fail();
         } catch (UnknownInputException e) {
             assertEquals(INVALID_CERT_CMD, e.getMessage());
@@ -68,12 +69,12 @@ public class UpdateCertificatesTest {
      */
     @Test
     public void testAdd() throws Exception {
-        UpdateCertificates uc = new UpdateCertificates(ksFilename, ksPassword);
+        final UpdateCertificates uc = new UpdateCertificates(this.filename, this.password);
         uc.parseLine(ADD_CERT_CMD);
         uc.finish();
 
-        KeyStoreHandler keystore = new KeyStoreHandler(ksFilename, ksPassword.toCharArray());
-        assertEquals(true, keystore.contains(CERT_ALIAS));
+        final KeyStoreHandler keystore = new KeyStoreHandler(this.filename, this.password.toCharArray());
+        assertTrue(keystore.contains(CERT_ALIAS));
     }
 
     /**
@@ -82,12 +83,12 @@ public class UpdateCertificatesTest {
      */
     @Test
     public void testAddInvalidCert() throws Exception {
-        UpdateCertificates uc = new UpdateCertificates(ksFilename, ksPassword);
+        final UpdateCertificates uc = new UpdateCertificates(this.filename, this.password);
         uc.parseLine("+/usr/share/ca-certificates/null.crt");
         uc.finish();
 
-        KeyStoreHandler keystore = new KeyStoreHandler(ksFilename, ksPassword.toCharArray());
-        assertEquals(false, keystore.contains("debian:null.crt"));
+        assertFalse(new KeyStoreHandler(this.filename, this.password.toCharArray())
+                .contains("debian:null.crt"));
     }
 
     /**
@@ -95,12 +96,12 @@ public class UpdateCertificatesTest {
      */
     @Test
     public void testAddCertWithComment() throws Exception {
-        UpdateCertificates uc = new UpdateCertificates(ksFilename, ksPassword);
+        final UpdateCertificates uc = new UpdateCertificates(this.filename, this.password);
         uc.parseLine("+target/test-classes/spi-cacert-2008-with-comment.crt");
         uc.finish();
 
-        KeyStoreHandler keystore = new KeyStoreHandler(ksFilename, ksPassword.toCharArray());
-        assertEquals(true, keystore.contains("debian:spi-cacert-2008-with-comment.crt"));
+        assertTrue(new KeyStoreHandler(this.filename, this.password.toCharArray())
+                .contains("debian:spi-cacert-2008-with-comment.crt"));
     }
 
     /**
@@ -109,13 +110,13 @@ public class UpdateCertificatesTest {
      */
     @Test
     public void testReplace() throws Exception {
-        UpdateCertificates uc = new UpdateCertificates(ksFilename, ksPassword);
+        final UpdateCertificates uc = new UpdateCertificates(this.filename, this.password);
         uc.parseLine(ADD_CERT_CMD);
         uc.parseLine(ADD_CERT_CMD);
         uc.finish();
 
-        KeyStoreHandler keystore = new KeyStoreHandler(ksFilename, ksPassword.toCharArray());
-        assertEquals(true, keystore.contains(CERT_ALIAS));
+        assertTrue(new KeyStoreHandler(this.filename, this.password.toCharArray())
+                .contains(CERT_ALIAS));
     }
 
     /**
@@ -123,13 +124,13 @@ public class UpdateCertificatesTest {
      */
     @Test
     public void testRemove() throws Exception {
-        UpdateCertificates uc = new UpdateCertificates(ksFilename, ksPassword);
+        final UpdateCertificates uc = new UpdateCertificates(this.filename, this.password);
         uc.parseLine(REMOVE_CERT_CMD);
         uc.finish();
 
         // We start with empty KS, so it shouldn't do anything
-        KeyStoreHandler keystore = new KeyStoreHandler(ksFilename, ksPassword.toCharArray());
-        assertEquals(false, keystore.contains(CERT_ALIAS));
+        assertFalse(new KeyStoreHandler(this.filename, this.password.toCharArray())
+                .contains(CERT_ALIAS));
     }
 
     /**
@@ -137,28 +138,28 @@ public class UpdateCertificatesTest {
      */
     @Test
     public void testAddThenRemove() throws Exception {
-        UpdateCertificates ucAdd = new UpdateCertificates(ksFilename, ksPassword);
+        final UpdateCertificates ucAdd = new UpdateCertificates(this.filename, this.password);
         ucAdd.parseLine(ADD_CERT_CMD);
         ucAdd.finish();
 
-        KeyStoreHandler keystore = new KeyStoreHandler(ksFilename, ksPassword.toCharArray());
-        assertEquals(true, keystore.contains(CERT_ALIAS));
+        final KeyStoreHandler keystore = new KeyStoreHandler(this.filename, this.password.toCharArray());
+        assertTrue(keystore.contains(CERT_ALIAS));
 
-        UpdateCertificates ucRemove = new UpdateCertificates(ksFilename, ksPassword);
+        final UpdateCertificates ucRemove = new UpdateCertificates(this.filename, this.password);
         ucRemove.parseLine(REMOVE_CERT_CMD);
         ucRemove.finish();
 
         keystore.load();
-        assertEquals(false, keystore.contains(CERT_ALIAS));
+        assertFalse(keystore.contains(CERT_ALIAS));
     }
 
     @Test
     public void testProcessChanges() throws Exception {
-        UpdateCertificates uc = new UpdateCertificates(ksFilename, ksPassword);
+        final UpdateCertificates uc = new UpdateCertificates(this.filename, this.password);
         uc.processChanges(new StringReader(ADD_CERT_CMD + "\n" + INVALID_CERT_CMD + "\n" + REMOVE_CERT_CMD + "\n"));
         uc.finish();
 
-        KeyStoreHandler keystore = new KeyStoreHandler(ksFilename, ksPassword.toCharArray());
-        assertEquals(false, keystore.contains(CERT_ALIAS));
+        assertFalse(new KeyStoreHandler(this.filename, this.password.toCharArray())
+                .contains(CERT_ALIAS));
     }
 }

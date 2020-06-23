@@ -23,6 +23,7 @@ package org.debian.security;
  * or IO error).
  */
 public class InvalidKeystorePasswordException extends Exception {
+
     private static final long serialVersionUID = 7004201816889107694L;
 
     public InvalidKeystorePasswordException(String message, Exception e) {

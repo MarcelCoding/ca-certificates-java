@@ -23,8 +23,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.security.cert.Certificate;
 
 /**
  * This code is a re-implementation of the idea from Ludwig Nussel found in
@@ -36,75 +36,66 @@ import java.security.cert.Certificate;
  */
 public class UpdateCertificates {
 
-    private KeyStoreHandler keystore;
+    private final KeyStoreHandler keystore;
 
-    public static void main(String[] args) throws IOException, GeneralSecurityException {
+    public UpdateCertificates(final String keystoreFile, final String password) throws IOException, GeneralSecurityException, InvalidKeystorePasswordException {
+        this.keystore = new KeyStoreHandler(keystoreFile, password.toCharArray());
+    }
+
+    public static void main(final String[] args) throws IOException, GeneralSecurityException {
         String passwordString = "changeit";
-        if (args.length == 2 && args[0].equals("-storepass")) {
+
+        if (args.length == 2 && args[0].equals("--storepass")) {
             passwordString = args[1];
         } else if (args.length > 0) {
-            System.err.println("Usage: java org.debian.security.UpdateCertificates [-storepass <password>]");
+            System.err.println("Usage: java org.debian.security.UpdateCertificates [--storepass <password>]");
             System.exit(1);
         }
 
         try {
-            UpdateCertificates uc = new UpdateCertificates("/etc/ssl/certs/java/cacerts", passwordString);
-            // Force reading of inputstream in UTF-8
-            uc.processChanges(new InputStreamReader(System.in, "UTF8"));
+            final UpdateCertificates uc = new UpdateCertificates(System.getenv("JAVA_HOME") + "/lib/security/cacerts", passwordString);
+            // Force reading of InputStream in UTF-8
+            uc.processChanges(new InputStreamReader(System.in, StandardCharsets.UTF_8));
             uc.finish();
-        } catch (InvalidKeystorePasswordException e) {
-            e.printStackTrace(System.err);
-            System.exit(1);
-        } catch (UnableToSaveKeystoreException e) {
-            e.printStackTrace(System.err);
+        } catch (InvalidKeystorePasswordException | UnableToSaveKeystoreException e) {
+            e.printStackTrace();
             System.exit(1);
         }
-    }
-
-    public UpdateCertificates(String keystoreFile, String password) throws IOException, GeneralSecurityException, InvalidKeystorePasswordException {
-        this.keystore = new KeyStoreHandler(keystoreFile, password.toCharArray());
     }
 
     /**
      * Until reader EOF, try to read changes and send each to {@link #parseLine(String)}.
      */
-    protected void processChanges(Reader reader) throws IOException, GeneralSecurityException {
+    protected void processChanges(final Reader reader) throws IOException, GeneralSecurityException {
         String line;
-        BufferedReader in = new BufferedReader(reader);
-        while ((line = in.readLine()) != null) {
-            try {
-                parseLine(line);
-            } catch (UnknownInputException e) {
-                System.err.println("Unknown input: " + line);
-                // Keep processing for others lines
+        try (BufferedReader br = new BufferedReader(reader)) {
+            while ((line = br.readLine()) != null) {
+                try {
+                    this.parseLine(line);
+                } catch (UnknownInputException e) {
+                    System.err.println("Unknown input: " + line);
+                    // Keep processing for others lines
+                }
             }
         }
     }
 
-    /**
-     * Parse given line to choose between {@link #addAlias(String, Certificate)}
-     * or {@link #deleteAlias(String)}.
-     */
-    protected void parseLine(final String line) throws GeneralSecurityException, IOException, UnknownInputException {
-        String path = line.substring(1);
-        String filename = path.substring(path.lastIndexOf("/") + 1);
-        String alias = "debian:" + filename;
-        if (line.startsWith("+")) {
-            keystore.addAlias(alias, path);
-        } else if (line.startsWith("-")) {
-            keystore.deleteAlias(alias);
-            // Remove old non-prefixed aliases, too. This code should be
-            // removed after the release of Wheezy.
-            keystore.deleteAlias(filename);
-        } else {
-            throw new UnknownInputException(line);
-        }
+    protected void parseLine(final String line) throws GeneralSecurityException, UnknownInputException {
+        final String path = line.substring(1);
+        final String filename = path.substring(path.lastIndexOf("/") + 1);
+        final String alias = "debian:" + filename;
+
+        if (line.startsWith("+")) this.keystore.addAlias(alias, path);
+        else if (line.startsWith("-")) {
+            this.keystore.deleteAlias(alias);
+            this.keystore.deleteAlias(filename);
+        } else throw new UnknownInputException(line);
     }
 
     /**
      * Write the pending changes to the keystore file.
      */
     protected void finish() throws GeneralSecurityException, UnableToSaveKeystoreException {
-        keystore.save();
+        this.keystore.save();
     }
 }

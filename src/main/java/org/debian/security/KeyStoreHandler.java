@@ -19,10 +19,11 @@
 
 package org.debian.security;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -34,54 +35,47 @@ import java.security.cert.CertificateFactory;
  */
 class KeyStoreHandler {
 
-    /** The path of the keystore */
-    private String filename;
+    /**
+     * The path of the keystore
+     */
+    private final String filename;
 
-    /** The password of the keystore */
-    private char[] password;
+    /**
+     * The password of the keystore
+     */
+    private final char[] password;
+    private final CertificateFactory certFactory;
+    private KeyStore keyStore;
 
-    private KeyStore ks;
-    
-    private CertificateFactory certFactory;
-
-    KeyStoreHandler(String filename, char[] password) throws GeneralSecurityException, IOException, InvalidKeystorePasswordException {
+    KeyStoreHandler(final String filename, final char[] password) throws GeneralSecurityException, InvalidKeystorePasswordException {
         this.filename = filename;
         this.password = password;
         this.certFactory = CertificateFactory.getInstance("X.509");
-        
-        load();
+
+        this.load();
     }
 
     /**
      * Try to open an existing keystore or create an new one.
      */
-    public void load() throws GeneralSecurityException, IOException, InvalidKeystorePasswordException {
-        KeyStore ks = KeyStore.getInstance("JKS");
-        File file = new File(filename);
-        FileInputStream in = null;
-        if (file.canRead()) {
-            in = new FileInputStream(file);
-        }
-        try {
-            ks.load(in, password);
+    public void load() throws GeneralSecurityException, InvalidKeystorePasswordException {
+        final KeyStore keyStore = KeyStore.getInstance("JKS");
+
+        try (InputStream inputStream = new FileInputStream(this.filename)) {
+            keyStore.load(inputStream, this.password);
         } catch (IOException e) {
             throw new InvalidKeystorePasswordException("Cannot open Java keystore. Is the password correct?", e);
-        } finally {
-            if (in != null) {
-                in.close();
-            }
         }
-        this.ks = ks;
+
+        this.keyStore = keyStore;
     }
 
     /**
      * Write actual keystore content to disk.
      */
     public void save() throws GeneralSecurityException, UnableToSaveKeystoreException {
-        try {
-            FileOutputStream certOutputFile = new FileOutputStream(filename);
-            ks.store(certOutputFile, password);
-            certOutputFile.close();
+        try (OutputStream outputStream = new FileOutputStream(this.filename)) {
+            this.keyStore.store(outputStream, this.password);
         } catch (IOException e) {
             throw new UnableToSaveKeystoreException("There was a problem saving the new Java keystore.", e);
         }
@@ -90,34 +84,31 @@ class KeyStoreHandler {
     /**
      * Add or replace existing cert in keystore with given alias.
      */
-    public void addAlias(String alias, String path) throws KeyStoreException {
-        Certificate cert = loadCertificate(path);
-        if (cert == null) {
-            return;
+    public void addAlias(final String alias, final String path) throws KeyStoreException {
+        final Certificate cert = this.loadCertificate(path);
+        if (cert != null) {
+            this.addAlias(alias, cert);
         }
-        addAlias(alias, cert);
     }
-    
+
     /**
      * Add or replace existing cert in keystore with given alias.
      */
-    public void addAlias(String alias, Certificate cert) throws KeyStoreException {
-        if (contains(alias)) {
+    public void addAlias(final String alias, final Certificate cert) throws KeyStoreException {
+        if (this.contains(alias)) {
             System.out.println("Replacing " + alias);
-            ks.deleteEntry(alias);
-        } else {
-            System.out.println("Adding " + alias);
-        }
-        ks.setCertificateEntry(alias, cert);
+            this.keyStore.deleteEntry(alias);
+        } else System.out.println("Adding " + alias);
+        this.keyStore.setCertificateEntry(alias, cert);
     }
 
     /**
      * Delete cert in keystore at given alias.
      */
-    public void deleteAlias(String alias) throws GeneralSecurityException {
-        if (contains(alias)) {
+    public void deleteAlias(final String alias) throws GeneralSecurityException {
+        if (this.contains(alias)) {
             System.out.println("Removing " + alias);
-            ks.deleteEntry(alias);
+            this.keyStore.deleteEntry(alias);
         }
     }
 
@@ -125,22 +116,19 @@ class KeyStoreHandler {
      * Returns true when alias exist in keystore.
      */
     public boolean contains(String alias) throws KeyStoreException {
-        return ks.containsAlias(alias);
+        return this.keyStore.containsAlias(alias);
     }
 
     /**
      * Try to load a certificate instance from given path.
      */
-    private Certificate loadCertificate(String path) {
-        Certificate certificate = null;
-        try {
-            FileInputStream in = new FileInputStream(path);
-            certificate = certFactory.generateCertificate(in);
-            in.close();
+    private Certificate loadCertificate(final String path) {
+        try (InputStream inputStream = new FileInputStream(path)) {
+            return this.certFactory.generateCertificate(inputStream);
         } catch (Exception e) {
-            System.err.println("Warning: there was a problem reading the certificate file " +
-                    path + ". Message:\n  " + e.getMessage());
+            System.err.println("Warning: there was a problem reading the certificate file "
+                    + path + ". Message:\n  " + e.getMessage());
+            return null;
         }
-        return certificate;
     }
 }

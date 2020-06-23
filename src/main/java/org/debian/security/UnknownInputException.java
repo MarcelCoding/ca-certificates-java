@@ -22,6 +22,7 @@ package org.debian.security;
  * Data send in stdin is invalid (neither "+" or "-" command).
  */
 public class UnknownInputException extends Exception {
+
     private static final long serialVersionUID = 5698253678856993527L;
 
     public UnknownInputException(String message) {
