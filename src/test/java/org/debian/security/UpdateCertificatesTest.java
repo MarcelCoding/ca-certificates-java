@@ -18,16 +18,13 @@
 
 package org.debian.security;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.StringReader;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for {@link UpdateCertificates}.
@@ -45,7 +42,7 @@ public class UpdateCertificatesTest {
     private final String filename = "./target/test-classes";
     private final String password = "changeit";
 
-    @Before
+    @BeforeEach
     public void start() {
         // Delete any previous file
         new File(this.filename).delete();
