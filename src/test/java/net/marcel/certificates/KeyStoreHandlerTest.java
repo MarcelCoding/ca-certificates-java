@@ -38,7 +38,7 @@ public class KeyStoreHandlerTest {
      */
     @Test
     public void testNoop() throws Exception {
-        new KeyStoreHandler(this.filename, this.password, clear).save();
+        new KeyStoreHandler(this.filename, this.password, false).save();
     }
 
     /**
@@ -49,13 +49,13 @@ public class KeyStoreHandlerTest {
     @Test
     public void testWriteThenOpenWrongPwd() throws Exception {
         try {
-            new KeyStoreHandler(this.filename, this.password, clear).save();
+            new KeyStoreHandler(this.filename, this.password, false).save();
         } catch (InvalidKeystorePasswordException e) {
             fail();
         }
 
         try {
-            final KeyStoreHandler keystore = new KeyStoreHandler(this.filename, "wrongpassword".toCharArray(), clear);
+            final KeyStoreHandler keystore = new KeyStoreHandler(this.filename, "wrongpassword".toCharArray(), false);
             fail();
             keystore.save();
         } catch (InvalidKeystorePasswordException e) {
@@ -71,7 +71,7 @@ public class KeyStoreHandlerTest {
     @Test
     public void testDeleteThenWrite() throws Exception {
         try {
-            final KeyStoreHandler keystore = new KeyStoreHandler(this.filename, this.password, clear);
+            final KeyStoreHandler keystore = new KeyStoreHandler(this.filename, this.password, false);
 
             // Replace actual file by a directory !
             final File file = new File(this.filename);
