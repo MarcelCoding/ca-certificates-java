@@ -16,7 +16,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package org.debian.security;
+package net.marcel.certificates;
 
 /**
  * Data send in stdin is invalid (neither "+" or "-" command).

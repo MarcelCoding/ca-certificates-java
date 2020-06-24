@@ -16,16 +16,17 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package org.debian.security;
+package net.marcel.certificates;
 
 /**
- * Unable to save keystore to provided location.
+ * Unable to open keystore from provided location (might be an invalid password
+ * or IO error).
  */
-public class UnableToSaveKeystoreException extends Exception {
+public class InvalidKeystorePasswordException extends Exception {
 
-    private static final long serialVersionUID = 3632154306237688490L;
+    private static final long serialVersionUID = 7004201816889107694L;
 
-    public UnableToSaveKeystoreException(String message, Exception e) {
+    public InvalidKeystorePasswordException(String message, Exception e) {
         super(message, e);
     }
 }
